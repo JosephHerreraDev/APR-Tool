@@ -1,24 +1,61 @@
-﻿decimal amountFinanced = 975M; // Total que va a pagar
-decimal payment = 340M; // Cantidad de pago al mes
-int numberOfPayments = 3; // Numero de pagos
-//bool monthly = true;
-decimal estimatedAPR = 27.4849M; // Estimacion inicial de APR
+﻿decimal amountFinanced = 1000M; // Total que va a pagar
+decimal payment = 33.61M; // Cantidad de pago al mes
+int numberOfPayments = 0; // Numero de pagos
+decimal estimatedUnitPeriods = 36;
+decimal estimatedAPR = 12.50M; // Estimacion inicial de APR
 int periods = 12; //Numero de periodos (meses)
 
 decimal monthRate = 0M; // Estimacion de la tasa al mes
 decimal finalTotalPayment = 0; // Total para la revision final
 
-// Suponiendo que pDate y lDate son variables DateTime que representan la fecha de pago y la fecha de inicio del préstamo respectivamente
-//DateTime lDate = new DateTime(2024, 1, 1); // Fecha de inicio del préstamo (año, mes, día)
-//DateTime pDate = new DateTime(2024, 12, 31); // Fecha de pago (año, mes, día)
+// Fecha de pago
+DateTime loanDate = new DateTime(2021, 1, 1);
+// Fecha de inicio del préstamo
+DateTime paymentDate = new DateTime(2024, 1, 1);
 
+// Revisar si alguno es el ultimo del mes
+bool isLoanDateLastDay = loanDate == new DateTime(loanDate.Year, loanDate.Month, DateTime.DaysInMonth(loanDate.Year, loanDate.Month));
+bool isPaymentDateLastDay = paymentDate == new DateTime(paymentDate.Year, paymentDate.Month, DateTime.DaysInMonth(paymentDate.Year, paymentDate.Month));
 
-//TimeSpan duration = pDate - lDate;
-//int totalDays = duration.Days;
-//int daysInUP = /* Aquí debes definir el número de días en unidades de período (daysInUP) */;
-//int units = (int)Math.Floor((double)totalDays / daysInUP);
-//return totalDays - (daysInUP * units);
+int monthsDifference = ((paymentDate.Year - loanDate.Year) * 12) + paymentDate.Month - loanDate.Month;
 
+// Revisa si ambos son el ultimo dia del mes y si los dias en el mes del pago son menos a los dias en el mes que empezo la deuda para agregar un mes
+if (isLoanDateLastDay && isPaymentDateLastDay && DateTime.DaysInMonth(paymentDate.Year, paymentDate.Month) < DateTime.DaysInMonth(loanDate.Year, loanDate.Month))
+{
+    monthsDifference++;
+}
+
+string[] typeOfDuration = new string[] { "monthly", "multiplesOfMonth", "semiMonthly", "actualDays" };
+
+string durationSelection = typeOfDuration[0];
+
+switch (durationSelection)
+{
+    case "monthly":
+        numberOfPayments = monthsDifference;
+        break;
+    case "multiplesOfMonth":
+        numberOfPayments = (int)Math.Floor(monthsDifference / estimatedUnitPeriods);
+        break;
+    case "semiMonthly":
+        decimal unitPeriods = monthsDifference * 2;
+        decimal oddDays = unitPeriods % 7;
+        while (oddDays >= 15)
+        {
+            oddDays -= 15;
+            unitPeriods++;
+        }
+        numberOfPayments = (int)unitPeriods;
+        break;
+    case "actualDays":
+        TimeSpan duration = paymentDate - loanDate;
+        int totalDays = duration.Days;
+        numberOfPayments = (int)Math.Floor(totalDays / estimatedUnitPeriods);
+        break;
+    default:
+        Console.WriteLine("Unknown duration type");
+        break;
+}
 
 // Sumar 0.1 a la estimacion mensual
 decimal Addrate()
