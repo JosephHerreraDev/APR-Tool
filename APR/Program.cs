@@ -1,15 +1,15 @@
 ﻿decimal amountFinanced = 1000M; // Total que va a pagar
+decimal estimatedAPR = 1M; // Estimacion inicial de APR
 decimal payment = 33.61M; // Cantidad de pago al mes
-int numberOfPayments = 0; // Numero de pagos
-decimal estimatedUnitPeriods = 36;
-decimal estimatedAPR = 12.50M; // Estimacion inicial de APR
-int periods = 12; //Numero de periodos (meses)
+int numberOfPayments = 36; // Numero de pagos
+decimal estimatedUnitPeriods = 0;
+int periods = 0; //Numero de periodos (meses)
 
 decimal monthRate = 0M; // Estimacion de la tasa al mes
 decimal finalTotalPayment = 0; // Total para la revision final
 
 // Fecha de pago
-DateTime loanDate = new DateTime(2021, 1, 1);
+DateTime loanDate = new DateTime(2023, 1, 1);
 // Fecha de inicio del préstamo
 DateTime paymentDate = new DateTime(2024, 1, 1);
 
@@ -32,31 +32,32 @@ string durationSelection = typeOfDuration[0];
 switch (durationSelection)
 {
     case "monthly":
-        numberOfPayments = monthsDifference;
+        //periods = monthsDifference;
+        periods = 12;
         break;
     case "multiplesOfMonth":
-        numberOfPayments = (int)Math.Floor(monthsDifference / estimatedUnitPeriods);
+        periods = (int)Math.Floor(monthsDifference / estimatedUnitPeriods);
         break;
     case "semiMonthly":
-        decimal unitPeriods = monthsDifference * 2;
-        decimal oddDays = unitPeriods % 7;
-        while (oddDays >= 15)
-        {
-            oddDays -= 15;
-            unitPeriods++;
-        }
-        numberOfPayments = (int)unitPeriods;
+        periods = 24;
+        //decimal unitPeriods = monthsDifference * 2;
+        //decimal oddDays = unitPeriods % 7;
+        //while (oddDays >= 15)
+        //{
+        //    oddDays -= 15;
+        //    unitPeriods++;
+        //}
+        //periods = (int)unitPeriods;
         break;
     case "actualDays":
         TimeSpan duration = paymentDate - loanDate;
         int totalDays = duration.Days;
-        numberOfPayments = (int)Math.Floor(totalDays / estimatedUnitPeriods);
+        periods = (int)Math.Floor(totalDays / estimatedUnitPeriods);
         break;
     default:
         Console.WriteLine("Unknown duration type");
         break;
 }
-
 // Sumar 0.1 a la estimacion mensual
 decimal Addrate()
 {
@@ -99,7 +100,7 @@ while (Math.Round(finalTotalPayment, 2) != amountFinanced)
     calculation();
 }
 
-Console.WriteLine("APR: %" + Math.Round(estimatedAPR, 4));
+Console.WriteLine("APR: %" + Math.Round(estimatedAPR, 2));
 
 estimatedAPR = Math.Round(estimatedAPR / 100 / 12, 4) ;
 
