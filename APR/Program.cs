@@ -57,7 +57,7 @@ while (Math.Round(finalTotalPayment, 2) != amountFinanced)
     finalTotalPayment = CalculateResult();
 }
 
-Console.WriteLine($"APR: {Math.Round(estimatedAPR, 2)}%");
+Console.WriteLine($"APR: {Math.Round(estimatedAPR, 4)}%");
 
 // Imprimir el importe final financiado
 decimal finalAmountFinanced = 0M;
