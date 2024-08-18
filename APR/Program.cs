@@ -1,88 +1,72 @@
-﻿decimal amountFinanced = 1056M; // Total que va a pagar
-decimal estimatedAPR = 1M; // Estimacion inicial de APR
-decimal payment = 33.61M; // Cantidad de pago al mes
-int numberOfPayments = 36; // Numero de pagos
-int periods = 0; //Numero de periodos (meses)
+﻿decimal amountFinanced = 1000M; // Total a pagar
+decimal estimatedAPR = 1M; // Estimacion inicial APR
+decimal monthlyPayment = 33.61M; // Cantidad a pagar
+int numberOfPayments = 36; // Number of payments
+int periodsPerYear = GetPeriodsPerYear("monthly"); // Numero de periodos año
 
-decimal monthRate = 0M; // Estimacion de la tasa al mes
-decimal finalTotalPayment = 0; // Total para la revision final
+decimal monthlyRate = 0M; // Tasa de interés mensual
+decimal finalTotalPayment = 0M; // Total para revision final
 
-string[] typeOfDuration = new string[] { "monthly", "semiMonthly", "weekly", "biweekly" };
-
-string durationSelection = typeOfDuration[0];
-
-switch (durationSelection)
+// Función para determinar períodos por año según el tipo de duración.
+int GetPeriodsPerYear(string durationType)
 {
-    case "monthly":
-        periods = 12;
-        break;
-    case "semiMonthly":
-        periods = 24;        
-        break;
-    case "weekly":
-        periods = 52;
-        break;
-    case "biweekly":
-        periods = 26;
-        break;
-    default:
-        Console.WriteLine("Unknown duration type");
-        break;
+    return durationType switch
+    {
+        "monthly" => 12,
+        "semiMonthly" => 24,
+        "weekly" => 52,
+        "biweekly" => 26,
+        _ => throw new ArgumentException("Unknown duration type")
+    };
 }
 
-// Sumar 0.1 a la estimacion mensual
-decimal Addrate()
+// Calcular la tarifa mensual
+void CalculateMonthlyRate()
 {
-    return estimatedAPR = Decimal.Add(estimatedAPR, 0.1M);
-}
-
-// Calcular la tasa mensual 
-void calculateMonthlyRate()
-{
-    monthRate = Math.Round(estimatedAPR / (periods * 100), 9);
+    monthlyRate = Math.Round(estimatedAPR / (periodsPerYear * 100), 9);
 }
 
 // Calcular el resultado
-decimal calculateResult()
+decimal CalculateResult()
 {
     decimal result = 0M;
-    calculateMonthlyRate();
+    CalculateMonthlyRate();
 
-    for (int x = 1; x < numberOfPayments + 1; x++)
+    for (int i = 1; i <= numberOfPayments; i++)
     {
-        result = Decimal.Add(result, (decimal)((double)payment / Math.Pow((double)(1M + monthRate), x)));
+        result += monthlyPayment / (decimal)Math.Pow((double)(1M + monthlyRate), i);
     }
     return result;
 }
 
-// Calculo
-void calculation()
+// Actualizar estimado de APR
+void UpdateAPR()
 {
-    decimal firstValue = calculateResult();
-    decimal firstRate = estimatedAPR;
-    Addrate();
-    decimal secondValue = calculateResult();
-    estimatedAPR = firstRate + (Decimal)0.1 * ((amountFinanced - firstValue) / (secondValue - firstValue));
-    finalTotalPayment = calculateResult();
+    decimal initialResult = CalculateResult();
+    estimatedAPR += 0.1M;
+    decimal updatedResult = CalculateResult();
+
+    estimatedAPR -= 0.1M; // Revertir el incremento de la APR para volver a calcularlo
+    estimatedAPR += 0.1M * ((amountFinanced - initialResult) / (updatedResult - initialResult));
 }
 
-// Mientras el resultado no sea el resultado final hacer el calculo
+// Actualiza iterativamente el APR hasta que el pago total final coincida con el monto financiado
 while (Math.Round(finalTotalPayment, 2) != amountFinanced)
 {
-    calculation();
+    UpdateAPR();
+    finalTotalPayment = CalculateResult();
 }
 
-Console.WriteLine("APR: %" + Math.Round(estimatedAPR, 2));
+Console.WriteLine($"APR: {Math.Round(estimatedAPR, 2)}%");
 
-estimatedAPR = Math.Round(estimatedAPR / 100 / 12, 4) ;
+// Imprimir el importe final financiado
+decimal finalAmountFinanced = 0M;
+CalculateMonthlyRate();
 
-decimal result = 0M;
-
-// Imprime lo que deberia de ser el Amount financed total
-for (int x = 1; x < numberOfPayments + 1; x++)
+for (int i = 1; i <= numberOfPayments; i++)
 {
-    result = Decimal.Add(result, (decimal)((double)payment / Math.Pow((double)(1M + estimatedAPR), x)));
-    result = Math.Round(result, 1);
+    finalAmountFinanced += monthlyPayment / (decimal)Math.Pow((double)(1M + estimatedAPR / 100 / periodsPerYear), i);
+    finalAmountFinanced = Math.Round(finalAmountFinanced, 1);
 }
 
-Console.WriteLine("Amount financed: " + result);
+Console.WriteLine($"Amount financed: {finalAmountFinanced}");
