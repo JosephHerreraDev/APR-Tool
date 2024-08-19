@@ -1,72 +1,111 @@
-﻿decimal amountFinanced = 1000M; // Total a pagar
-decimal estimatedAPR = 1M; // Estimacion inicial APR
-decimal monthlyPayment = 33.61M; // Cantidad a pagar
-int numberOfPayments = 36; // Number of payments
-int periodsPerYear = GetPeriodsPerYear("monthly"); // Numero de periodos año
-
-decimal monthlyRate = 0M; // Tasa de interés mensual
-decimal finalTotalPayment = 0M; // Total para revision final
-
-// Función para determinar períodos por año según el tipo de duración.
-int GetPeriodsPerYear(string durationType)
+﻿class Program
 {
-    return durationType switch
+    static void Main(string[] args)
     {
-        "monthly" => 12,
-        "semiMonthly" => 24,
-        "weekly" => 52,
-        "biweekly" => 26,
-        _ => throw new ArgumentException("Unknown duration type")
-    };
-}
+        // Función para determinar períodos por año según el tipo de duración.
+        int GetPeriodsPerYear(string durationType)
+        {
+            return durationType switch
+            {
+                "monthly" => 12,
+                "semiMonthly" => 24,
+                "weekly" => 52,
+                "biweekly" => 26,
+                _ => throw new ArgumentException("Unknown duration type")
+            };
+        }
 
-// Calcular la tarifa mensual
-void CalculateMonthlyRate()
-{
-    monthlyRate = Math.Round(estimatedAPR / (periodsPerYear * 100), 9);
-}
+        // Para calcular el unit period del ultimo pago es necesario pasarle la cantidad de pagos que van a realizarse
 
-// Calcular el resultado
-decimal CalculateResult()
-{
-    decimal result = 0M;
-    CalculateMonthlyRate();
 
-    for (int i = 1; i <= numberOfPayments; i++)
-    {
-        result += monthlyPayment / (decimal)Math.Pow((double)(1M + monthlyRate), i);
+        CalculateAPR calculateAPR = new CalculateAPR(
+            amountFinanced: 1000M, 
+            estimatedAPR: 1M, 
+            monthlyPayment: 33.61M, 
+            numberOfPayments: 36, 
+            periodsPerYear: GetPeriodsPerYear("monthly"), 
+            monthlyRate: 0M, 
+            finalTotalPayment: 0M);
+
+        calculateAPR.PrintResult();
     }
-    return result;
+
+    public class CalculateAPR
+    {
+        decimal amountFinanced; // Total a pagar
+        decimal estimatedAPR; // Estimacion inicial APR
+        decimal monthlyPayment; // Cantidad a pagar
+        int numberOfPayments; // Number of payments
+        int periodsPerYear; // Numero de periodos año
+
+        decimal monthlyRate; // Tasa de interés mensual
+        decimal finalTotalPayment; // Total para revision final
+
+        public CalculateAPR(decimal amountFinanced, decimal estimatedAPR, decimal monthlyPayment, int numberOfPayments, int periodsPerYear, decimal monthlyRate, decimal finalTotalPayment)
+        {
+            this.amountFinanced = amountFinanced;
+            this.estimatedAPR = estimatedAPR;
+            this.monthlyPayment = monthlyPayment;
+            this.numberOfPayments = numberOfPayments;
+            this.periodsPerYear = periodsPerYear;
+            this.monthlyRate = monthlyRate;
+            this.finalTotalPayment = finalTotalPayment;
+        }
+
+        // Calcular la tarifa mensual
+        void CalculateMonthlyRate()
+        {
+            monthlyRate = Math.Round(estimatedAPR / (periodsPerYear * 100), 9);
+        }
+
+        // Calcular el resultado
+        decimal CalculateResult()
+        {
+            decimal result = 0M;
+            CalculateMonthlyRate();
+
+            for (int i = 1; i <= numberOfPayments; i++)
+            {
+                result += monthlyPayment / (decimal)Math.Pow((double)(1M + monthlyRate), i);
+            }
+            return result;
+        }
+
+        // Actualizar estimado de APR
+        void UpdateAPR()
+        {
+            decimal initialResult = CalculateResult();
+            estimatedAPR += 0.1M;
+            decimal updatedResult = CalculateResult();
+
+            estimatedAPR -= 0.1M; // Revertir el incremento de la APR para volver a calcularlo
+            estimatedAPR += 0.1M * ((amountFinanced - initialResult) / (updatedResult - initialResult));
+        }
+
+        public void PrintResult()
+        {
+
+            // Actualiza iterativamente el APR hasta que el pago total final coincida con el monto financiado
+            while (Math.Round(finalTotalPayment, 2) != amountFinanced)
+            {
+                UpdateAPR();
+                finalTotalPayment = CalculateResult();
+            }
+
+            Console.WriteLine($"APR: {Math.Round(estimatedAPR, 4)}%");
+
+            // Imprimir el importe final financiado
+            decimal finalAmountFinanced = 0M;
+            CalculateMonthlyRate();
+
+            for (int i = 1; i <= numberOfPayments; i++)
+            {
+                finalAmountFinanced += monthlyPayment / (decimal)Math.Pow((double)(1M + estimatedAPR / 100 / periodsPerYear), i);
+                finalAmountFinanced = Math.Round(finalAmountFinanced, 1);
+            }
+
+            Console.WriteLine($"Amount financed: {finalAmountFinanced}");
+        }   
+    }
 }
 
-// Actualizar estimado de APR
-void UpdateAPR()
-{
-    decimal initialResult = CalculateResult();
-    estimatedAPR += 0.1M;
-    decimal updatedResult = CalculateResult();
-
-    estimatedAPR -= 0.1M; // Revertir el incremento de la APR para volver a calcularlo
-    estimatedAPR += 0.1M * ((amountFinanced - initialResult) / (updatedResult - initialResult));
-}
-
-// Actualiza iterativamente el APR hasta que el pago total final coincida con el monto financiado
-while (Math.Round(finalTotalPayment, 2) != amountFinanced)
-{
-    UpdateAPR();
-    finalTotalPayment = CalculateResult();
-}
-
-Console.WriteLine($"APR: {Math.Round(estimatedAPR, 4)}%");
-
-// Imprimir el importe final financiado
-decimal finalAmountFinanced = 0M;
-CalculateMonthlyRate();
-
-for (int i = 1; i <= numberOfPayments; i++)
-{
-    finalAmountFinanced += monthlyPayment / (decimal)Math.Pow((double)(1M + estimatedAPR / 100 / periodsPerYear), i);
-    finalAmountFinanced = Math.Round(finalAmountFinanced, 1);
-}
-
-Console.WriteLine($"Amount financed: {finalAmountFinanced}");
