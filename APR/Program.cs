@@ -16,6 +16,8 @@
         }
 
         // Para calcular el unit period del ultimo pago es necesario pasarle la cantidad de pagos que van a realizarse
+
+
         CalculateAPR calculateAPR = new CalculateAPR(
             amountFinanced: 1000M, 
             estimatedAPR: 1M, 
