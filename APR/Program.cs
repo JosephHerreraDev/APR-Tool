@@ -35,6 +35,7 @@ class Program
             lastPayment:280);
 
         Console.WriteLine("APR: " + calculateApr.APR + "%");
+        Console.ReadLine();
     }
 
     public class CalculateAPR
