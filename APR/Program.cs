@@ -1,4 +1,12 @@
-﻿class Program
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+
+class Program
 {
     static void Main(string[] args)
     {
@@ -15,41 +23,44 @@
             };
         }
 
-        // Para calcular el unit period del ultimo pago es necesario pasarle la cantidad de pagos que van a realizarse
-
-
-        CalculateAPR calculateAPR = new CalculateAPR(
-            amountFinanced: 1000M, 
-            estimatedAPR: 1M, 
-            monthlyPayment: 33.61M, 
-            numberOfPayments: 36, 
+        CalculateAPR calculateAprRegularPayment = new CalculateAPR(
+            amountFinanced: 5000M, 
+            estimatedAPR: 1M,
+            paymentAmount: 230M, 
+            numberOfPayments: 24, 
             periodsPerYear: GetPeriodsPerYear("monthly"), 
             monthlyRate: 0M, 
-            finalTotalPayment: 0M);
-
-        calculateAPR.PrintResult();
+            finalTotalPayment: 0M,
+            lastPayment:280);
+        foreach(var x in calculateAprRegularPayment.returnResult())
+        {
+            Console.WriteLine(x);
+        }
+        
     }
 
     public class CalculateAPR
     {
         decimal amountFinanced; // Total a pagar
         decimal estimatedAPR; // Estimacion inicial APR
-        decimal monthlyPayment; // Cantidad a pagar
+        decimal paymentAmount; // Cantidad a pagar
         int numberOfPayments; // Number of payments
         int periodsPerYear; // Numero de periodos año
 
         decimal monthlyRate; // Tasa de interés mensual
         decimal finalTotalPayment; // Total para revision final
+        decimal lastPayment;
 
-        public CalculateAPR(decimal amountFinanced, decimal estimatedAPR, decimal monthlyPayment, int numberOfPayments, int periodsPerYear, decimal monthlyRate, decimal finalTotalPayment)
+        public CalculateAPR(decimal amountFinanced, decimal estimatedAPR, decimal paymentAmount, int numberOfPayments, int periodsPerYear, decimal monthlyRate, decimal finalTotalPayment, decimal lastPayment)
         {
             this.amountFinanced = amountFinanced;
             this.estimatedAPR = estimatedAPR;
-            this.monthlyPayment = monthlyPayment;
+            this.paymentAmount = paymentAmount;
             this.numberOfPayments = numberOfPayments;
             this.periodsPerYear = periodsPerYear;
             this.monthlyRate = monthlyRate;
             this.finalTotalPayment = finalTotalPayment;
+            this.lastPayment = lastPayment;
         }
 
         // Calcular la tarifa mensual
@@ -66,7 +77,15 @@
 
             for (int i = 1; i <= numberOfPayments; i++)
             {
-                result += monthlyPayment / (decimal)Math.Pow((double)(1M + monthlyRate), i);
+                if (lastPayment > 0 && i == numberOfPayments)
+                {
+                    result += lastPayment / (decimal)Math.Pow((double)(1M + monthlyRate), i);
+                }
+                else 
+                {
+                    result += paymentAmount / (decimal)Math.Pow((double)(1M + monthlyRate), i);
+                }
+                
             }
             return result;
         }
@@ -82,8 +101,9 @@
             estimatedAPR += 0.1M * ((amountFinanced - initialResult) / (updatedResult - initialResult));
         }
 
-        public void PrintResult()
+        public List<decimal> returnResult()
         {
+            List<decimal> result = new List<decimal>();
 
             // Actualiza iterativamente el APR hasta que el pago total final coincida con el monto financiado
             while (Math.Round(finalTotalPayment, 2) != amountFinanced)
@@ -92,7 +112,7 @@
                 finalTotalPayment = CalculateResult();
             }
 
-            Console.WriteLine($"APR: {Math.Round(estimatedAPR, 4)}%");
+            result.Add(Math.Round(estimatedAPR, 4));
 
             // Imprimir el importe final financiado
             decimal finalAmountFinanced = 0M;
@@ -100,11 +120,13 @@
 
             for (int i = 1; i <= numberOfPayments; i++)
             {
-                finalAmountFinanced += monthlyPayment / (decimal)Math.Pow((double)(1M + estimatedAPR / 100 / periodsPerYear), i);
+                finalAmountFinanced += paymentAmount / (decimal)Math.Pow((double)(1M + estimatedAPR / 100 / periodsPerYear), i);
                 finalAmountFinanced = Math.Round(finalAmountFinanced, 1);
             }
 
-            Console.WriteLine($"Amount financed: {finalAmountFinanced}");
+            result.Add(finalAmountFinanced);
+
+            return result;
         }   
     }
 }
