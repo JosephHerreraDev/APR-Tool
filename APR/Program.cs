@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 class Program
 {
@@ -23,7 +24,7 @@ class Program
             };
         }
 
-        CalculateAPR calculateAprRegularPayment = new CalculateAPR(
+        CalculateAPR calculateApr = new CalculateAPR(
             amountFinanced: 5000M, 
             estimatedAPR: 1M,
             paymentAmount: 230M, 
@@ -32,11 +33,8 @@ class Program
             monthlyRate: 0M, 
             finalTotalPayment: 0M,
             lastPayment:280);
-        foreach(var x in calculateAprRegularPayment.returnResult())
-        {
-            Console.WriteLine(x);
-        }
-        
+
+        Console.WriteLine("APR: " + calculateApr.APR + "%");
     }
 
     public class CalculateAPR
@@ -51,7 +49,22 @@ class Program
         decimal finalTotalPayment; // Total para revision final
         decimal lastPayment;
 
-        public CalculateAPR(decimal amountFinanced, decimal estimatedAPR, decimal paymentAmount, int numberOfPayments, int periodsPerYear, decimal monthlyRate, decimal finalTotalPayment, decimal lastPayment)
+        decimal apr;
+
+        public decimal APR
+        {
+            get { return apr; }
+        }
+
+        public CalculateAPR(
+            decimal amountFinanced, 
+            decimal estimatedAPR, 
+            decimal paymentAmount, 
+            int numberOfPayments, 
+            int periodsPerYear, 
+            decimal monthlyRate, 
+            decimal finalTotalPayment, 
+            decimal lastPayment)
         {
             this.amountFinanced = amountFinanced;
             this.estimatedAPR = estimatedAPR;
@@ -61,6 +74,8 @@ class Program
             this.monthlyRate = monthlyRate;
             this.finalTotalPayment = finalTotalPayment;
             this.lastPayment = lastPayment;
+
+            returnResult();
         }
 
         // Calcular la tarifa mensual
@@ -101,10 +116,8 @@ class Program
             estimatedAPR += 0.1M * ((amountFinanced - initialResult) / (updatedResult - initialResult));
         }
 
-        public List<decimal> returnResult()
+        public void returnResult()
         {
-            List<decimal> result = new List<decimal>();
-
             // Actualiza iterativamente el APR hasta que el pago total final coincida con el monto financiado
             while (Math.Round(finalTotalPayment, 2) != amountFinanced)
             {
@@ -112,10 +125,11 @@ class Program
                 finalTotalPayment = CalculateResult();
             }
 
-            result.Add(Math.Round(estimatedAPR, 4));
+            apr = Math.Round(estimatedAPR, 4);
 
-            // Imprimir el importe final financiado
+            // Calcular el importe final financiado
             decimal finalAmountFinanced = 0M;
+
             CalculateMonthlyRate();
 
             for (int i = 1; i <= numberOfPayments; i++)
@@ -123,10 +137,6 @@ class Program
                 finalAmountFinanced += paymentAmount / (decimal)Math.Pow((double)(1M + estimatedAPR / 100 / periodsPerYear), i);
                 finalAmountFinanced = Math.Round(finalAmountFinanced, 1);
             }
-
-            result.Add(finalAmountFinanced);
-
-            return result;
         }   
     }
 }
