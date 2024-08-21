@@ -75,7 +75,7 @@ class Program
             this.finalTotalPayment = finalTotalPayment;
             this.lastPayment = lastPayment;
 
-            returnResult();
+            ReturnResult();
         }
 
         // Calcular la tarifa mensual
@@ -116,7 +116,7 @@ class Program
             estimatedAPR += 0.1M * ((amountFinanced - initialResult) / (updatedResult - initialResult));
         }
 
-        public void returnResult()
+        public void ReturnResult()
         {
             // Actualiza iterativamente el APR hasta que el pago total final coincida con el monto financiado
             while (Math.Round(finalTotalPayment, 2) != amountFinanced)
