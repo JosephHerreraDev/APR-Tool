@@ -39,17 +39,17 @@ class Program
 
     public class CalculateAPR
     {
-        decimal amountFinanced; // Total a pagar
-        decimal estimatedAPR; // Estimacion inicial APR
-        decimal paymentAmount; // Cantidad a pagar
-        int numberOfPayments; // Number of payments
-        int periodsPerYear; // Numero de periodos año
+        private readonly decimal amountFinanced; // Total a pagar
+        private decimal estimatedAPR; // Estimacion inicial APR
+        private readonly decimal paymentAmount; // Cantidad a pagar
+        private readonly int numberOfPayments; // Number of payments
+        private readonly int periodsPerYear; // Numero de periodos año
 
-        decimal monthlyRate; // Tasa de interés mensual
-        decimal finalTotalPayment; // Total para revision final
-        decimal lastPayment;
+        private decimal monthlyRate; // Tasa de interés mensual
+        private decimal finalTotalPayment; // Total para revision final
+        private readonly decimal lastPayment;
 
-        decimal apr;
+        private decimal apr;
 
         public decimal APR
         {
